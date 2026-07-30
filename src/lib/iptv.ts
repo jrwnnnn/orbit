@@ -3,16 +3,8 @@ import { env } from "cloudflare:workers";
 export interface Channel {
 	id: string;
 	name: string;
-	alt_names: string[];
-	network: string | null;
-	owners: string[];
 	country: string;
 	categories: string[];
-	is_nsfw: boolean;
-	launched: string | null;
-	closed: string | null;
-	replaced_by: string | null;
-	website: string;
 }
 
 interface Logo {
@@ -38,8 +30,11 @@ export async function getData(): Promise<Data[]> {
 	]);
 
 	const logoMap = new Map(logos.map((l) => [l.channel, l.url]));
-	const data = channels.map((channel) => ({
-		...channel,
+	const data: Data[] = channels.map((channel) => ({
+		id: channel.id,
+		name: channel.name,
+		country: channel.country,
+		categories: channel.categories,
 		logo: logoMap.get(channel.id) ?? null,
 	}));
 
