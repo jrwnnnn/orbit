@@ -18,14 +18,14 @@ interface Logo {
 	url: string;
 }
 
-export async function getChannelData() {
+export async function getData() {
 	const [channels, logos] = await Promise.all([
-		fetch("https://iptv-org.github.io/api/channels.json").then(
-			(res) => res.json() as Promise<Channel[]>,
-		),
-		fetch("https://iptv-org.github.io/api/logos.json").then(
-			(res) => res.json() as Promise<Logo[]>,
-		),
+		fetch("https://iptv-org.github.io/api/channels.json", {
+			cf: { cacheTtl: 3600, cacheEverything: true },
+		}).then((res) => res.json() as Promise<Channel[]>),
+		fetch("https://iptv-org.github.io/api/logos.json", {
+			cf: { cacheTtl: 3600, cacheEverything: true },
+		}).then((res) => res.json() as Promise<Logo[]>),
 	]);
 
 	const logoMap = new Map(logos.map((l) => [l.channel, l.url]));
