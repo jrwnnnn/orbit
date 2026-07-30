@@ -1,0 +1,107 @@
+---
+import { env } from "cloudflare:workers";
+import { getChannelData } from "../lib/iptv";
+import Layout from "../layouts/Layout.astro";
+import navButton from "../assets/ui/nav.png";
+
+const { channel } = Astro.params;
+
+const src = await env.DB.prepare("SELECT url FROM channels WHERE id = ?")
+	.bind(channel)
+	.first();
+
+const nav = await env.DB.prepare(
+	`
+	SELECT
+		COALESCE(
+			(SELECT MAX(id) FROM channels WHERE id < ?),
+			(SELECT MAX(id) FROM channels)
+		) AS prevId,
+		COALESCE(
+			(SELECT MIN(id) FROM channels WHERE id > ?),
+			(SELECT MIN(id) FROM channels)
+		) AS nextId
+`,
+)
+	.bind(channel, channel)
+	.first();
+
+const data = new Map((await getChannelData()).map((c) => [c.id, c]));
+---
+
+<Layout title="Just Tv">
+	<main class="flex flex-col bg-black">
+		<video
+			id="hls-video"
+			data-src={src?.url}
+			class="min-h-screen"
+			controls
+			autoplay
+			playsinline
+		>
+		</video>
+		<div class="flex items-center justify-between px-10 py-5 text-white">
+			<img
+				src={navButton.src}
+				id="prev-btn"
+				data-href={`/${nav?.prevId}`}
+				class="w-8 rotate-180 cursor-pointer invert"
+			/>
+
+			<p class="font-mono text-lg font-bold">
+				{data.get(channel as string)?.name}
+			</p>
+
+			<img
+				src={navButton.src}
+				id="next-btn"
+				data-href={`/${nav?.nextId}`}
+				class="w-8 cursor-pointer invert"
+			/>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	import Hls from "hls.js";
+
+	const video = document.getElementById("hls-video") as HTMLVideoElement;
+	const src = video.dataset.src;
+
+	if (src) {
+		if (Hls.isSupported()) {
+			const hls = new Hls();
+			hls.loadSource(src);
+			hls.attachMedia(video);
+		} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+			video.src = src;
+		}
+	}
+</script>
+
+<script>
+	window.scrollTo(0, document.body.scrollHeight);
+
+	const prevBtn = document.getElementById("prev-btn") as HTMLImageElement;
+	const nextBtn = document.getElementById("next-btn") as HTMLImageElement;
+
+	prevBtn?.addEventListener("click", (e) => {
+		const href = (e.currentTarget as HTMLElement).dataset.href;
+		if (href) location.replace(href);
+	});
+	nextBtn?.addEventListener("click", (e) => {
+		const href = (e.currentTarget as HTMLElement).dataset.href;
+		if (href) location.replace(href);
+	});
+
+	document.addEventListener("keydown", (e) => {
+		switch (e.key) {
+			case "ArrowLeft":
+				prevBtn?.click();
+				break;
+			case "ArrowRight":
+				nextBtn?.click();
+				break;
+		}
+	});
+</script>
