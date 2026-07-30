@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	@apply flex min-h-dvh flex-col overflow-x-hidden bg-neutral-900 text-white;
+}

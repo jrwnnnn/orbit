@@ -1,0 +1,93 @@
+---
+import { env } from "cloudflare:workers";
+import { getChannelData } from "../lib/iptv";
+import Layout from "../layouts/Layout.astro";
+
+interface List {
+	results: {
+		id: string;
+	}[];
+}
+
+const list: List = await env.DB.prepare(
+	"SELECT * FROM channels ORDER BY id",
+).all();
+
+const data = new Map((await getChannelData()).map((c) => [c.id, c]));
+---
+
+<Layout title="Just TV">
+	<main class="p-10">
+		<div class="flex justify-end">
+			<p class="mb-8 text-center text-xl font-bold" id="time"></p>
+		</div>
+		<div class="grid grid-cols-5 gap-5">
+			{
+				list.results.map((channel) => {
+					return (
+						<a
+							href={channel.id}
+							title={data.get(channel.id)?.name}
+							class="group flex flex-col"
+						>
+							<div class="flex h-40 grow items-center justify-center rounded-lg bg-neutral-800 transition hover:bg-neutral-700">
+								<img
+									src={data.get(channel.id)?.logo}
+									class="max-h-20 w-24 object-contain"
+									alt={data.get(channel.id)?.name}
+									loading="lazy"
+								/>
+							</div>
+							<p class="mt-2 line-clamp-1 truncate text-center font-mono text-sm text-neutral-400 group-hover:font-bold">
+								{data.get(channel.id)?.name}
+							</p>
+							<div class="mt-1 flex items-center justify-center gap-2">
+								<span class="tags uppercase">
+									{data.get(channel.id)?.country}
+								</span>
+								{data.get(channel.id)?.categories[0] && (
+									<span class="tags capitalize">
+										{data.get(channel.id)?.categories[0]}
+									</span>
+								)}
+							</div>
+						</a>
+					);
+				})
+			}
+		</div>
+		<div
+			class="mt-20 flex flex-col items-center justify-center text-sm text-neutral-500"
+		>
+			<p>
+				This website does not host or store content. All video streams are
+				provided by external third-party sources.
+			</p>
+
+			<a class="underline" href="https://jrwnnnn.me" target="_blank">
+				Project jrwnnnn_
+			</a>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	const time = document.getElementById("time") as HTMLParagraphElement;
+	setInterval(
+		() =>
+			(time.textContent = new Date().toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: true,
+			})),
+		1000,
+	);
+</script>
+
+<style>
+	@reference "../styles/global.css";
+
+	.tags {
+		@apply rounded-md border border-neutral-600 px-1 font-mono text-[0.7rem] text-neutral-400;
+	}
+</style>

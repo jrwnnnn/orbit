@@ -1,0 +1,21 @@
+{
+	"compatibility_date": "2026-04-01",
+	"compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
+	"name": "just-tv",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "just-tv",
+			"database_id": "a0418840-d329-4090-b4d8-dae33f6008fb",
+			"remote": true
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}
