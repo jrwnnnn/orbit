@@ -13,7 +13,7 @@ const list: List = await env.DB.prepare(
 	"SELECT * FROM channels ORDER BY id",
 ).all();
 
-const data = new Map((await getData("all")).map((c) => [c.id, c]));
+const data = new Map((await getData()).map((c) => [c.id, c]));
 ---
 
 <Layout title="Orbit">
@@ -24,6 +24,7 @@ const data = new Map((await getData("all")).map((c) => [c.id, c]));
 		<div class="grid grid-cols-5 gap-5">
 			{
 				list.results.map((channel) => {
+					
 					return (
 						<a
 							href={channel.id}
