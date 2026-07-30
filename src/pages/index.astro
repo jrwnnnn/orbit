@@ -1,6 +1,6 @@
 ---
 import { env } from "cloudflare:workers";
-import { getChannelData } from "../lib/iptv";
+import { getData } from "../lib/iptv";
 import Layout from "../layouts/Layout.astro";
 
 interface List {
@@ -13,7 +13,7 @@ const list: List = await env.DB.prepare(
 	"SELECT * FROM channels ORDER BY id",
 ).all();
 
-const data = new Map((await getChannelData()).map((c) => [c.id, c]));
+const data = new Map((await getData("all")).map((c) => [c.id, c]));
 ---
 
 <Layout title="Orbit">
