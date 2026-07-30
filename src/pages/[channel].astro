@@ -27,9 +27,10 @@ const nav = await env.DB.prepare(
 	.first();
 
 const data = new Map((await getChannelData()).map((c) => [c.id, c]));
+const channelName = data.get(channel as string)?.name;
 ---
 
-<Layout title="Just Tv">
+<Layout title={`${channelName} - Orbit`}>
 	<main class="flex flex-col bg-black">
 		<video
 			id="hls-video"
