@@ -1,3 +1,5 @@
+import { env } from "cloudflare:workers";
+
 export interface Channel {
 	id: string;
 	name: string;
@@ -18,20 +20,32 @@ interface Logo {
 	url: string;
 }
 
-export async function getData() {
+export interface Data extends Channel {
+	logo: string | null;
+}
+
+export async function getData(): Promise<Data[]> {
+	const cachedData = await env.SESSION.get<Data[]>("cache", "json");
+	if (cachedData) return cachedData;
+
 	const [channels, logos] = await Promise.all([
-		fetch("https://iptv-org.github.io/api/channels.json", {
-			cf: { cacheTtl: 3600, cacheEverything: true },
-		}).then((res) => res.json() as Promise<Channel[]>),
-		fetch("https://iptv-org.github.io/api/logos.json", {
-			cf: { cacheTtl: 3600, cacheEverything: true },
-		}).then((res) => res.json() as Promise<Logo[]>),
+		fetch("https://iptv-org.github.io/api/channels.json").then(
+			(res) => res.json() as Promise<Channel[]>,
+		),
+		fetch("https://iptv-org.github.io/api/logos.json").then(
+			(res) => res.json() as Promise<Logo[]>,
+		),
 	]);
 
 	const logoMap = new Map(logos.map((l) => [l.channel, l.url]));
-
-	return channels.map((channel) => ({
+	const data = channels.map((channel) => ({
 		...channel,
 		logo: logoMap.get(channel.id) ?? null,
 	}));
+
+	await env.SESSION.put("cache", JSON.stringify(data), {
+		expirationTtl: 43200,
+	});
+
+	return data;
 }
