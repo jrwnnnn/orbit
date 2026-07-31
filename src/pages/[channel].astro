@@ -92,12 +92,12 @@ const channelName = data.get(channel as string)?.name;
 							"url('https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg')";
 
 						if (error.response?.code === 403) {
-							bg.addEventListener("click", () => {
+							errorText.addEventListener("click", () => {
 								location.href = dataset;
 							});
 
 							errorText.textContent =
-								"Cannot load the stream here. Click anywhere on the page to load the stream directly.";
+								"Cannot load the stream here. Click heree to load the stream directly.";
 						} else {
 							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
 						}
