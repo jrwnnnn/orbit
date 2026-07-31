@@ -13,7 +13,7 @@ const list: List = await env.DB.prepare(
 	"SELECT * FROM channels ORDER BY id",
 ).all();
 
-const data = new Map((await getData("all")).map((c) => [c.id, c]));
+const data = new Map((await getData()).map((c) => [c.id, c]));
 ---
 
 <Layout title="Orbit">
