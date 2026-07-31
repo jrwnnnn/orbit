@@ -2,7 +2,6 @@
 import { env } from "cloudflare:workers";
 import { getData } from "../lib/iptv";
 import Layout from "../layouts/Layout.astro";
-import navButton from "../assets/ui/nav.png";
 
 const { channel } = Astro.params;
 
@@ -31,34 +30,28 @@ const channelName = data.get(channel as string)?.name;
 ---
 
 <Layout title={`${channelName} - Orbit`}>
-	<main class="flex flex-col bg-black">
+	<main
+		id="bg"
+		class="flex min-h-dvh items-center justify-center bg-black bg-cover bg-center"
+	>
+		<p
+			id="error-text"
+			class="text-balance bg-black/90 p-3 text-center font-mono text-lg font-bold text-white"
+		>
+		</p>
+
 		<video
 			id="hls-video"
 			data-src={src?.url}
-			class="min-h-screen"
-			controls
+			class="h-dvh"
 			autoplay
 			playsinline
 		>
 		</video>
-		<div class="flex items-center justify-between px-10 py-5 text-white">
-			<img
-				src={navButton.src}
-				id="prev-btn"
-				data-href={`/${nav?.prevId}`}
-				class="w-8 rotate-180 cursor-pointer invert"
-			/>
 
-			<p class="font-mono text-lg font-bold">
-				{data.get(channel as string)?.name}
-			</p>
-
-			<img
-				src={navButton.src}
-				id="next-btn"
-				data-href={`/${nav?.nextId}`}
-				class="w-8 cursor-pointer invert"
-			/>
+		<div class="hidden">
+			<button id="prev-btn" data-href={`/${nav?.prevId}`}></button>
+			<button id="next-btn" data-href={`/${nav?.nextId}`}></button>
 		</div>
 	</main>
 </Layout>
@@ -66,7 +59,11 @@ const channelName = data.get(channel as string)?.name;
 <script>
 	import Hls from "hls.js";
 
+	const bg = document.getElementById("bg") as HTMLDivElement;
 	const video = document.getElementById("hls-video") as HTMLVideoElement;
+	const errorText = document.getElementById(
+		"error-text",
+	) as HTMLParagraphElement;
 	const dataset = video.dataset.src;
 
 	if (dataset) {
@@ -79,18 +76,40 @@ const channelName = data.get(channel as string)?.name;
 			console.warn("HLS Source is HTTP, using proxy...");
 		}
 
-		if (Hls.isSupported()) {
-			const hls = new Hls();
-			hls.loadSource(src);
-			hls.attachMedia(video);
+		if (src) {
+			if (Hls.isSupported()) {
+				const hls = new Hls();
+				hls.loadSource(src);
+				hls.attachMedia(video);
 
-			hls.on(Hls.Events.ERROR, (_event, error) => {
-				if (error.fatal) {
-					console.error("HLS Error:", error);
-				}
-			});
-		} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-			video.src = src;
+				hls.on(Hls.Events.ERROR, (_event, error) => {
+					if (error.fatal) {
+						console.error("HLS Error:", error);
+
+						hls.destroy();
+						video.style.display = "none";
+						bg.style.backgroundImage =
+							"url('https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg')";
+
+						if (
+							error.response?.code === 403 &&
+							dataset.startsWith("http://") &&
+							dataset.endsWith(".m3u8")
+						) {
+							bg.addEventListener("click", () => {
+								window.open(dataset, "_blank");
+							});
+
+							errorText.textContent =
+								"Cannot load the stream here. Click anywhere on the page to open it in a new tab.";
+						} else {
+							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
+						}
+					}
+				});
+			} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+				video.src = src;
+			}
 		}
 	}
 </script>
@@ -98,8 +117,8 @@ const channelName = data.get(channel as string)?.name;
 <script>
 	window.scrollTo(0, document.body.scrollHeight);
 
-	const prevBtn = document.getElementById("prev-btn") as HTMLImageElement;
-	const nextBtn = document.getElementById("next-btn") as HTMLImageElement;
+	const prevBtn = document.getElementById("prev-btn") as HTMLButtonElement;
+	const nextBtn = document.getElementById("next-btn") as HTMLButtonElement;
 
 	prevBtn?.addEventListener("click", (e) => {
 		const href = (e.currentTarget as HTMLElement).dataset.href;
