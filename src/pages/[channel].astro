@@ -93,7 +93,7 @@ const channelName = data.get(channel as string)?.name;
 
 						if (error.response?.code === 403) {
 							bg.addEventListener("click", () => {
-								window.open(dataset);
+								location.href = dataset;
 							});
 
 							errorText.textContent =
