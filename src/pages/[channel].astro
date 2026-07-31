@@ -67,13 +67,28 @@ const channelName = data.get(channel as string)?.name;
 	import Hls from "hls.js";
 
 	const video = document.getElementById("hls-video") as HTMLVideoElement;
-	const src = video.dataset.src;
+	const dataset = video.dataset.src;
 
-	if (src) {
+	if (dataset) {
+		const isHttp = dataset.startsWith("http://");
+		const src = isHttp
+			? `/api/proxy?url=${encodeURIComponent(dataset)}`
+			: dataset;
+
+		if (isHttp) {
+			console.warn("HLS Source is HTTP, using proxy...");
+		}
+
 		if (Hls.isSupported()) {
 			const hls = new Hls();
 			hls.loadSource(src);
 			hls.attachMedia(video);
+
+			hls.on(Hls.Events.ERROR, (_event, error) => {
+				if (error.fatal) {
+					console.error("HLS Error:", error);
+				}
+			});
 		} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
 			video.src = src;
 		}
