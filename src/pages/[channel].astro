@@ -97,7 +97,7 @@ const channelName = data.get(channel as string)?.name;
 							});
 
 							errorText.textContent =
-								"Cannot load the stream here. Click anywhere on the page to open it in a new tab.";
+								"Cannot load the stream here. Click anywhere on the page to load the stream directly.";
 						} else {
 							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
 						}
