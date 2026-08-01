@@ -98,6 +98,8 @@ const channelName = data.get(channel as string)?.name;
 
 							errorText.textContent =
 								"Cannot load the stream here. Click here to load the stream directly.";
+
+							errorText.classList.add("cursor-pointer");
 						} else {
 							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
 						}
