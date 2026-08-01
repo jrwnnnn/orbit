@@ -4,6 +4,7 @@ import { getData } from "../lib/iptv";
 import Layout from "../layouts/Layout.astro";
 
 const { channel } = Astro.params;
+const initial = Astro.url.searchParams.get("initial") === "true";
 
 const src = await env.DB.prepare("SELECT url FROM channels WHERE id = ?")
 	.bind(channel)
@@ -31,14 +32,13 @@ const channelName = data.get(channel as string)?.name;
 
 <Layout title={`${channelName} - Orbit`}>
 	<main
-		id="bg"
 		class="flex min-h-dvh items-center justify-center bg-black bg-cover bg-center"
 	>
-		<p
-			id="error-text"
-			class="text-balance bg-black/90 p-3 text-center font-mono text-lg font-bold text-white"
-		>
-		</p>
+		<img
+			id="smpte"
+			src="https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg"
+			class="hidden h-dvh"
+		/>
 
 		<video
 			id="hls-video"
@@ -49,6 +49,39 @@ const channelName = data.get(channel as string)?.name;
 		>
 		</video>
 
+		<div
+			id="osd"
+			class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
+		>
+			<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
+				<p id="osd-channelName" class="text-2xl font-bold">
+					{channelName}
+				</p>
+				<div id="osd-schedule">
+					<p>Now:</p>
+					<p>Next:</p>
+				</div>
+			</div>
+
+			{
+				initial && (
+					<p
+						id="osd-toast-info"
+						class="rounded-md bg-green-500 px-6 py-1 font-mono font-bold text-white"
+					>
+						TIP: Use your remote control or keyboard arrow keys to navigate
+						channels.
+					</p>
+				)
+			}
+
+			<p
+				id="osd-toast-error"
+				class="hidden rounded-md bg-red-700 px-6 py-1 font-mono font-bold text-white"
+			>
+			</p>
+		</div>
+
 		<div class="hidden">
 			<button id="prev-btn" data-href={`/${nav?.prevId}`}></button>
 			<button id="next-btn" data-href={`/${nav?.nextId}`}></button>
@@ -56,13 +89,26 @@ const channelName = data.get(channel as string)?.name;
 	</main>
 </Layout>
 
+<style>
+	@keyframes disappear {
+		0%,
+		99% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+</style>
+
 <script>
 	import Hls from "hls.js";
 
-	const bg = document.getElementById("bg") as HTMLDivElement;
+	const smpte = document.getElementById("smpte") as HTMLImageElement;
 	const video = document.getElementById("hls-video") as HTMLVideoElement;
-	const errorText = document.getElementById(
-		"error-text",
+	const osd = document.getElementById("osd") as HTMLDivElement;
+	const toast = document.getElementById(
+		"osd-toast-error",
 	) as HTMLParagraphElement;
 	const dataset = video.dataset.src;
 
@@ -85,23 +131,23 @@ const channelName = data.get(channel as string)?.name;
 				hls.on(Hls.Events.ERROR, (_event, error) => {
 					if (error.fatal) {
 						console.error("HLS Error:", error);
-
 						hls.destroy();
-						video.style.display = "none";
-						bg.style.backgroundImage =
-							"url('https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg')";
 
-						if (error.response?.code === 403) {
-							errorText.addEventListener("click", () => {
+						smpte.style.display = "block";
+						video.style.display = "none";
+						osd.classList.remove("animate-[disappear_7s_step-end_forwards]");
+						toast.classList.remove("hidden");
+
+						if (error.response?.code !== 403) {
+							osd.classList.add("cursor-pointer");
+							osd.classList.remove("pointer-events-none");
+							osd.addEventListener("click", () => {
 								location.href = dataset;
 							});
-
-							errorText.textContent =
-								"Cannot load the stream here. Click here to load the stream directly.";
-
-							errorText.classList.add("cursor-pointer");
+							toast.textContent =
+								"This stream could not be loaded in this viewer. Click here to open it directly.";
 						} else {
-							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
+							toast.textContent = `Failed to load the stream: ${error.error?.message}`;
 						}
 					}
 				});
