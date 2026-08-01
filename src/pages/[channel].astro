@@ -60,17 +60,21 @@ const schedule = await getNowNext(channel as string);
 				</p>
 				<div id="osd-schedule">
 					<p>Now: {schedule.now?.title}</p>
-					<p>
-						Next: {schedule.next?.title} ({
-							new Date(schedule.next?.start_date as Date).toLocaleTimeString(
-								"en-US",
-								{
-									hour: "numeric",
-									minute: "2-digit",
-									hour12: true,
-								},
+					<p id="osd-schedule-next">
+						Next: {schedule.next?.title}
+
+						{
+							schedule.next?.start_date && (
+								<>
+									(
+									<span
+										id="osd-schedule-next-time"
+										data-start={schedule.next.start_date}
+									/>
+									)
+								</>
 							)
-						})
+						}
 					</p>
 				</div>
 			</div>
@@ -140,4 +144,18 @@ const schedule = await getNowNext(channel as string);
 	});
 
 	initPlayer();
+</script>
+
+<script>
+	const element = document.getElementById(
+		"osd-schedule-next-time",
+	) as HTMLSpanElement;
+	const start = element.dataset.start;
+	if (start) {
+		element.textContent = new Date(start).toLocaleTimeString("en-US", {
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: true,
+		});
+	}
 </script>
