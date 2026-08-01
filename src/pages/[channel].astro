@@ -138,7 +138,7 @@ const channelName = data.get(channel as string)?.name;
 						osd.classList.remove("animate-[disappear_7s_step-end_forwards]");
 						toast.classList.remove("hidden");
 
-						if (error.response?.code !== 403) {
+						if (error.response?.code === 403) {
 							osd.classList.add("cursor-pointer");
 							osd.classList.remove("pointer-events-none");
 							osd.addEventListener("click", () => {
