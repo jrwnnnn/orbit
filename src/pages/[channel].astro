@@ -27,10 +27,9 @@ const nav = await env.DB.prepare(
 	.first();
 
 const data = new Map((await getData()).map((c) => [c.id, c]));
-const channelName = data.get(channel as string)?.name;
 ---
 
-<Layout title={`${channelName} - Orbit`}>
+<Layout title={`${data.get(channel as string)?.name} - Orbit`}>
 	<main
 		class="flex min-h-dvh items-center justify-center bg-black bg-cover bg-center"
 	>
@@ -55,7 +54,7 @@ const channelName = data.get(channel as string)?.name;
 		>
 			<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
 				<p id="osd-channelName" class="text-2xl font-bold">
-					{channelName}
+					{data.get(channel as string)?.name}
 				</p>
 				<div id="osd-schedule">
 					<p>Now:</p>
