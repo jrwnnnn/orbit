@@ -4,6 +4,7 @@ import { getData } from "../lib/iptv";
 import Layout from "../layouts/Layout.astro";
 
 const { channel } = Astro.params;
+const initial = Astro.url.searchParams.get("initial") === "true";
 
 const src = await env.DB.prepare("SELECT url FROM channels WHERE id = ?")
 	.bind(channel)
@@ -26,19 +27,17 @@ const nav = await env.DB.prepare(
 	.first();
 
 const data = new Map((await getData()).map((c) => [c.id, c]));
-const channelName = data.get(channel as string)?.name;
 ---
 
-<Layout title={`${channelName} - Orbit`}>
+<Layout title={`${data.get(channel as string)?.name} - Orbit`}>
 	<main
-		id="bg"
 		class="flex min-h-dvh items-center justify-center bg-black bg-cover bg-center"
 	>
-		<p
-			id="error-text"
-			class="text-balance bg-black/90 p-3 text-center font-mono text-lg font-bold text-white"
-		>
-		</p>
+		<img
+			id="smpte"
+			src="https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg"
+			class="hidden h-dvh"
+		/>
 
 		<video
 			id="hls-video"
@@ -49,6 +48,39 @@ const channelName = data.get(channel as string)?.name;
 		>
 		</video>
 
+		<div
+			id="osd"
+			class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
+		>
+			<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
+				<p id="osd-channelName" class="text-2xl font-bold">
+					{data.get(channel as string)?.name}
+				</p>
+				<div id="osd-schedule">
+					<p>Now:</p>
+					<p>Next:</p>
+				</div>
+			</div>
+
+			{
+				initial && (
+					<p
+						id="osd-toast-info"
+						class="rounded-md bg-green-500 px-6 py-1 font-mono font-bold text-white"
+					>
+						TIP: Use your remote control or keyboard arrow keys to navigate
+						channels.
+					</p>
+				)
+			}
+
+			<p
+				id="osd-toast-error"
+				class="hidden rounded-md bg-red-700 px-6 py-1 font-mono font-bold text-white"
+			>
+			</p>
+		</div>
+
 		<div class="hidden">
 			<button id="prev-btn" data-href={`/${nav?.prevId}`}></button>
 			<button id="next-btn" data-href={`/${nav?.nextId}`}></button>
@@ -56,64 +88,20 @@ const channelName = data.get(channel as string)?.name;
 	</main>
 </Layout>
 
-<script>
-	import Hls from "hls.js";
-
-	const bg = document.getElementById("bg") as HTMLDivElement;
-	const video = document.getElementById("hls-video") as HTMLVideoElement;
-	const errorText = document.getElementById(
-		"error-text",
-	) as HTMLParagraphElement;
-	const dataset = video.dataset.src;
-
-	if (dataset) {
-		const isHttp = dataset.startsWith("http://");
-		const src = isHttp
-			? `/api/proxy?url=${encodeURIComponent(dataset)}`
-			: dataset;
-
-		if (isHttp) {
-			console.warn("HLS Source is HTTP, using proxy...");
+<style>
+	@keyframes disappear {
+		0%,
+		99% {
+			opacity: 1;
 		}
-
-		if (src) {
-			if (Hls.isSupported()) {
-				const hls = new Hls();
-				hls.loadSource(src);
-				hls.attachMedia(video);
-
-				hls.on(Hls.Events.ERROR, (_event, error) => {
-					if (error.fatal) {
-						console.error("HLS Error:", error);
-
-						hls.destroy();
-						video.style.display = "none";
-						bg.style.backgroundImage =
-							"url('https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg')";
-
-						if (error.response?.code === 403) {
-							errorText.addEventListener("click", () => {
-								location.href = dataset;
-							});
-
-							errorText.textContent =
-								"Cannot load the stream here. Click here to load the stream directly.";
-
-							errorText.classList.add("cursor-pointer");
-						} else {
-							errorText.textContent = `Failed to load the stream: ${error.error?.message}`;
-						}
-					}
-				});
-			} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-				video.src = src;
-			}
+		100% {
+			opacity: 0;
 		}
 	}
-</script>
+</style>
 
 <script>
-	window.scrollTo(0, document.body.scrollHeight);
+	import { initPlayer } from "../lib/hls-player";
 
 	const prevBtn = document.getElementById("prev-btn") as HTMLButtonElement;
 	const nextBtn = document.getElementById("next-btn") as HTMLButtonElement;
@@ -137,4 +125,6 @@ const channelName = data.get(channel as string)?.name;
 				break;
 		}
 	});
+
+	initPlayer();
 </script>

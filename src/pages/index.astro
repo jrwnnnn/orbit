@@ -26,7 +26,7 @@ const data = new Map((await getData()).map((c) => [c.id, c]));
 				list.results.map((channel) => {
 					return (
 						<a
-							href={channel.id}
+							href={`${channel.id}?initial=true`}
 							title={data.get(channel.id)?.name}
 							class="group flex flex-col"
 						>
