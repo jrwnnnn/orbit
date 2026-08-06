@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "vue-tsc -b && vite build && ares-package dist --no-minify",
+		"build": "vite build && ares-package dist --no-minify",
 		"preview": "vite preview"
 	},
 	"dependencies": {
