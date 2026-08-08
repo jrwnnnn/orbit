@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  vue-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,18 +16,7 @@ jobs:
           node-version: 24
           cache: "npm"
       - run: npm ci
-      - run: npx eslint .
-
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "npm"
-      - run: npm ci
-      - run: npx astro check
+      - run: npx vue-tsc -b
 
   codeql:
     runs-on: ubuntu-latest
@@ -47,7 +36,7 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   build:
-    needs: [lint, typecheck, codeql]
+    needs: [vue-typecheck, codeql]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,11 +55,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prune dev dependencies
-        run: npm prune --production
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: scaffold
-          path: .
+          name: orbit
+          path: |
+            dist/
+            *.ipk

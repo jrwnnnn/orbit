@@ -1,34 +1,27 @@
 {
 	"name": "orbit",
+	"private": true,
+	"version": "0.0.0",
 	"type": "module",
-	"version": "0.0.1",
 	"scripts": {
-		"dev": "astro dev",
-		"build": "astro build",
-		"preview": "astro preview",
-		"generate-types": "wrangler types",
-		"test": "npx eslint . && npx astro check && npm run build"
+		"dev": "vite",
+		"build": "vite build && ares-package dist --no-minify",
+		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@astrojs/cloudflare": "^13.1.10",
-		"astro": "^6.3.2",
-		"autoprefixer": "^10.4.20",
 		"hls.js": "^1.6.16",
-		"postcss": "^8.4.49",
-		"tailwindcss": "^3.4.17",
-		"wrangler": "^4.95.0"
+		"vue": "^3.5.40"
 	},
 	"devDependencies": {
-		"@astrojs/check": "^0.9.8",
-		"@cloudflare/workers-types": "^4.20260418.1",
-		"@eslint/js": "^10.0.1",
-		"@types/node": "^25.6.0",
-		"eslint": "^10.0.2",
-		"eslint-plugin-astro": "^1.6.0",
-		"prettier": "^3.8.1",
-		"prettier-plugin-astro": "^0.14.1",
-		"prettier-plugin-tailwindcss": "^0.7.2",
-		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.56.1"
+		"@types/node": "^24.13.3",
+		"@vitejs/plugin-vue": "^6.0.8",
+		"@vue/tsconfig": "^0.9.1",
+		"@webosose/ares-cli": "^2.4.0",
+		"autoprefixer": "^10.5.4",
+		"postcss": "^8.5.25",
+		"tailwindcss": "^3.4.19",
+		"typescript": "~6.0.2",
+		"vite": "^8.2.0",
+		"vue-tsc": "^3.3.8"
 	}
 }
