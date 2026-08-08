@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import Hls from "hls.js";
-import master from "@/data/master.json";
+import channels from "@/data/channels.json";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
-const currentChannel = ref<string>();
+// Create a map of channel IDs to channel objects
+const channelsMap = new Map(channels.map((c) => [c.id, c]));
 
-// Create a Map for quick lookup of channel data by ID
-const data = new Map(master.map((c) => [c.id, c]));
+// The channel to be displayed
+// Set the initial channel to the first one in the channels list
+const currentChannel = ref<string>(channels[0]?.id);
 
-let hls: Hls | null = null;
+let player: Hls | null = null;
 const hlsVideo = ref<HTMLVideoElement>();
 const smpte = ref<HTMLDivElement>();
 const osd = ref<HTMLDivElement>();
@@ -16,53 +18,61 @@ const toast = ref<HTMLDivElement>();
 
 // Cleanup function to destroy the Hls instance and reset it
 function cleanup() {
-	hls?.destroy();
-	hls = null;
+	player?.destroy();
+	player = null;
 }
 
-watch(currentChannel, async (id) => {
-	cleanup();
-	if (!id) return;
+watch(
+	currentChannel,
+	async (id) => {
+		cleanup();
+		if (!id) return;
 
-	smpte.value?.classList.add("hidden");
-	toast.value?.classList.add("hidden");
-	if (hlsVideo.value) hlsVideo.value.style.display = "";
+		await nextTick();
 
-	osd.value?.classList.remove("animate-[disappear_7s_step-end_forwards]");
-	void osd.value?.offsetWidth;
-	osd.value?.classList.add("animate-[disappear_7s_step-end_forwards]");
+		smpte.value?.classList.add("hidden");
+		toast.value?.classList.add("hidden");
+		hlsVideo.value!.style.display = "";
 
-	await nextTick();
-	const src = data.get(id)?.url;
-	if (!src || !hlsVideo.value) return;
+		osd.value?.classList.remove("animate-[disappear_7s_step-end_forwards]");
+		void osd.value?.offsetWidth;
+		osd.value?.classList.add("animate-[disappear_7s_step-end_forwards]");
 
-	if (Hls.isSupported()) {
-		hls = new Hls();
-		hls.loadSource(src);
-		hls.attachMedia(hlsVideo.value);
+		const src = channelsMap.get(id)?.url;
+		if (!src || !hlsVideo.value) return;
 
-		// Handle HLS errors
-		hls.on(Hls.Events.ERROR, (_event, error) => {
-			console.warn("HLS error:", error);
+		if (Hls.isSupported()) {
+			player = new Hls();
+			player.loadSource(src);
+			player.attachMedia(hlsVideo.value);
 
-			if (error.fatal) {
-				console.error("HLS fatal error:", error);
-				cleanup();
+			// Handle fatal HLS errors by cleaning up the player and showing an error message on the OSD
+			player.on(Hls.Events.ERROR, (_event, error) => {
+				console.warn("HLS error:", error);
 
-				smpte.value!.classList.remove("hidden");
-				hlsVideo.value!.style.display = "none";
-				osd.value!.classList.remove("animate-[disappear_7s_step-end_forwards]");
-				toast.value!.classList.remove("hidden");
-				toast.value!.textContent = `Failed to load the stream: ${error.error?.message}`;
-			}
-		});
-	} else if (hlsVideo.value.canPlayType("application/vnd.apple.mpegurl")) {
-		hlsVideo.value.src = src;
-	}
-});
+				if (error.fatal) {
+					console.error("HLS fatal error:", error);
+					cleanup();
 
-// Keyboard navigation for channel selection
-const channelIds = master.map((c) => c.id);
+					smpte.value!.classList.remove("hidden");
+					hlsVideo.value!.style.display = "none";
+					osd.value!.classList.remove(
+						"animate-[disappear_7s_step-end_forwards]",
+					);
+					toast.value!.classList.remove("hidden");
+					toast.value!.textContent = `Failed to load the stream: ${error.error?.message}`;
+				}
+			});
+		} else if (hlsVideo.value.canPlayType("application/vnd.apple.mpegurl")) {
+			// Set the video src directly for browsers that support HLS natively
+			hlsVideo.value.src = src;
+		}
+	},
+	{ immediate: true },
+);
+
+// Remote control navigation
+const channelIds = channels.map((c) => c.id);
 onMounted(() =>
 	document.addEventListener("keydown", (e: KeyboardEvent) => {
 		const idx = channelIds.indexOf(currentChannel.value as string);
@@ -73,9 +83,6 @@ onMounted(() =>
 			case "ArrowDown":
 				if (idx < channelIds.length - 1)
 					currentChannel.value = channelIds[idx + 1];
-				break;
-			case "Escape":
-				currentChannel.value = undefined;
 				break;
 		}
 	}),
@@ -89,86 +96,33 @@ onBeforeUnmount(() => {
 
 <template>
 	<main>
-		<div v-if="!currentChannel" class="p-10">
-			<div class="grid grid-cols-5 gap-5">
-				<div
-					v-for="channel in master"
-					:key="channel.id"
-					@click="currentChannel = channel.id"
-					class="group flex flex-col"
-				>
-					<div
-						class="flex h-40 grow items-center justify-center rounded-lg bg-neutral-800 transition hover:bg-neutral-700"
-					>
-						<img
-							:src="data.get(channel.id)?.logo"
-							class="max-h-20 w-24 object-contain"
-							:alt="data.get(channel.id)?.name"
-							loading="lazy"
-						/>
-					</div>
-					<p
-						class="mt-2 line-clamp-1 truncate text-center font-mono text-sm text-neutral-400 group-hover:font-bold"
-					>
-						{{ data.get(channel.id)?.name }}
-					</p>
-					<div class="mt-1 flex items-center justify-center gap-2">
-						<span
-							class="rounded-md border border-neutral-600 px-1 font-mono text-[0.7rem] text-neutral-400 uppercase"
-						>
-							{{ data.get(channel.id)?.country }}
-						</span>
-						<span
-							v-if="data.get(channel.id)?.categories[0]"
-							class="rounded-md border border-neutral-600 px-1 font-mono text-[0.7rem] text-neutral-400 capitalize"
-						>
-							{{ data.get(channel.id)?.categories[0] }}
-						</span>
-					</div>
-				</div>
-			</div>
+		<div class="flex justify-center max-h-dvh w-full bg-black">
+			<img
+				ref="smpte"
+				src="https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg"
+				class="hidden h-dvh object-cover"
+			/>
+
+			<video ref="hlsVideo" class="h-dvh" autoplay playsinline></video>
+
 			<div
-				class="mt-20 flex flex-col items-center justify-center text-sm text-neutral-500"
+				ref="osd"
+				class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
 			>
-				<p>
-					This website does not host or store content. All video streams are
-					provided by external third-party sources.
-				</p>
-
-				<a class="underline" href="https://jrwnnnn.me" target="_blank">
-					Mark Jerwin
-				</a>
-			</div>
-		</div>
-		<div v-else>
-			<div class="flex justify-center max-h-dvh w-full bg-black">
-				<img
-					ref="smpte"
-					src="https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg"
-					class="hidden h-dvh object-cover"
-				/>
-
-				<video ref="hlsVideo" class="h-dvh" autoplay playsinline></video>
-
-				<div
-					ref="osd"
-					class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
-				>
-					<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
-						<p class="text-2xl font-bold">
-							{{ data.get(currentChannel)?.name }}
-						</p>
-						<div>
-							<p>Now:</p>
-							<p>Next:</p>
-						</div>
+				<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
+					<p class="text-2xl font-bold">
+						{{ channelsMap.get(currentChannel)?.name }}
+					</p>
+					<div>
+						<p>Now:</p>
+						<p>Next:</p>
 					</div>
-
-					<p
-						ref="toast"
-						class="hidden rounded-md bg-red-700 px-6 py-1 font-mono font-bold text-white"
-					></p>
 				</div>
+
+				<p
+					ref="toast"
+					class="hidden rounded-md bg-red-700 px-6 py-1 font-mono font-bold text-white"
+				></p>
 			</div>
 		</div>
 	</main>
