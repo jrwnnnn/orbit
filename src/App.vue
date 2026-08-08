@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import Hls from "hls.js";
 import channels from "@/data/channels.json";
+import { getNowNext, type NowNext } from "@/lib/epg";
+import Hls from "hls.js";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 // Create a map of channel IDs to channel objects
@@ -9,6 +10,13 @@ const channelsMap = new Map(channels.map((c) => [c.id, c]));
 // The channel to be displayed
 // Set the initial channel to the first one in the channels list
 const currentChannel = ref<string>(channels[0]?.id);
+
+// Store the current and next program information for the current channel
+// Set the initial values to null, populated later on watch()
+const epg = ref<NowNext>({
+	now: null,
+	next: null,
+});
 
 let player: Hls | null = null;
 const hlsVideo = ref<HTMLVideoElement>();
@@ -29,6 +37,11 @@ watch(
 		if (!id) return;
 
 		await nextTick();
+
+		// Fetch the current and next program information for the selected channel
+		getNowNext(id).then((result) => {
+			epg.value = result;
+		});
 
 		smpte.value?.classList.add("hidden");
 		toast.value?.classList.add("hidden");
@@ -110,12 +123,24 @@ onBeforeUnmount(() => {
 				class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
 			>
 				<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
-					<p class="text-2xl font-bold">
-						{{ channelsMap.get(currentChannel)?.name }}
-					</p>
+					<div class="flex gap-2 items-center">
+						<p class="text-2xl font-bold mr-2">
+							{{ channelsMap.get(currentChannel)?.name }}
+						</p>
+						<span class="tags uppercase">
+							{{ channelsMap.get(currentChannel)?.country }}
+						</span>
+						<span
+							v-if="channelsMap.get(currentChannel)?.categories[0]"
+							class="tags capitalize"
+						>
+							{{ channelsMap.get(currentChannel)?.categories[0] }}
+						</span>
+					</div>
+
 					<div>
-						<p>Now:</p>
-						<p>Next:</p>
+						<p>Now: {{ epg.now?.title }}</p>
+						<p>Next: {{ epg.next?.title }}</p>
 					</div>
 				</div>
 
@@ -127,15 +152,3 @@ onBeforeUnmount(() => {
 		</div>
 	</main>
 </template>
-
-<style>
-@keyframes disappear {
-	0%,
-	99% {
-		opacity: 1;
-	}
-	100% {
-		opacity: 0;
-	}
-}
-</style>

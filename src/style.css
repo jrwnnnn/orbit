@@ -5,3 +5,17 @@
 body {
 	@apply flex min-h-dvh flex-col overflow-x-hidden bg-neutral-900 text-white;
 }
+
+@keyframes disappear {
+	0%,
+	99% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+.tags {
+	@apply rounded-md border border-neutral-600 px-1 font-mono text-sm text-neutral-300;
+}
