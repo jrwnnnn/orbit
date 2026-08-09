@@ -113,10 +113,15 @@ onBeforeUnmount(() => {
 			<img
 				ref="smpte"
 				src="https://t3.ftcdn.net/jpg/05/39/64/56/360_F_539645678_UGE3wFAgMELL8kdqp72FYd7J46df43Sj.jpg"
-				class="hidden h-dvh object-cover"
+				class="hidden h-screen w-full object-cover"
 			/>
 
-			<video ref="hlsVideo" class="h-dvh" autoplay playsinline></video>
+			<video
+				ref="hlsVideo"
+				class="h-screen"
+				autoplay
+				playsinline
+			></video>
 
 			<div
 				ref="osd"
