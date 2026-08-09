@@ -18,7 +18,7 @@ const epg = ref<NowNext>({
 	next: null,
 });
 
-let player: Hls | null = null;
+let hls: Hls | null = null;
 const hlsVideo = ref<HTMLVideoElement>();
 const smpte = ref<HTMLDivElement>();
 const osd = ref<HTMLDivElement>();
@@ -26,16 +26,19 @@ const toast = ref<HTMLDivElement>();
 
 // Cleanup function to destroy the Hls instance and reset it
 function cleanup() {
-	player?.destroy();
-	player = null;
+	hls?.destroy();
+	hls = null;
 }
 
 watch(
 	currentChannel,
 	async (id) => {
+		// Destroy the previous Hls instance and reset it to null to avoid memory leaks
 		cleanup();
+
 		if (!id) return;
 
+		// Wait for the DOM to update.
 		await nextTick();
 
 		// Fetch the current and next program information for the selected channel
@@ -55,13 +58,16 @@ watch(
 		if (!src || !hlsVideo.value) return;
 
 		if (Hls.isSupported()) {
-			player = new Hls();
-			player.loadSource(src);
-			player.attachMedia(hlsVideo.value);
+			// Snapshot this instance so the error handler below can tell whether it's still the active player when it fires later
+			const thisHls = new Hls();
+			hls = thisHls;
 
-			// Handle fatal HLS errors by cleaning up the player and showing an error message on the OSD
-			player.on(Hls.Events.ERROR, (_event, error) => {
-				console.warn("HLS error:", error);
+			hls.loadSource(src);
+			hls.attachMedia(hlsVideo.value);
+
+			hls.on(Hls.Events.ERROR, (_event, error) => {
+				// Ignore errors from previous Hls instances
+				if (hls !== thisHls) return;
 
 				if (error.fatal) {
 					console.error("HLS fatal error:", error);
@@ -74,6 +80,8 @@ watch(
 					);
 					toast.value!.classList.remove("hidden");
 					toast.value!.textContent = `Failed to load the stream: ${error.error?.message}`;
+				} else {
+					console.warn("HLS error:", error);
 				}
 			});
 		} else if (hlsVideo.value.canPlayType("application/vnd.apple.mpegurl")) {
