@@ -2,8 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+	webOS injects these styles, which we need to override:
+	{
+		cursor: default;
+		font-family: "LG Display-Regular";
+		font-weight: 400 !important;
+	}
+*/
+
+@font-face {
+	font-family: "JetBrains";
+	src: url("/fonts/JetBrains/regular.woff") format("woff");
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: "JetBrains-Bold";
+	src: url("/fonts/JetBrains/bold.woff") format("woff");
+	font-weight: 700;
+}
+
+/* Override webOS injected !important flagged font "LG Display Regular" */
+@layer base {
+	* {
+		@apply !font-['JetBrains'];
+	}
+}
+
+html {
+	@apply text-[25px];
+}
+
 body {
 	@apply flex min-h-dvh flex-col overflow-x-hidden bg-neutral-900 text-white;
+}
+
+.tags {
+	@apply rounded-md border border-neutral-600 px-1 text-lg text-neutral-300;
+}
+
+/* Apply the bold version of JetBrains Mono to "font-bold" TailwindCSS class to override webOS injected !important flagged 400 font-weight */
+.font-bold {
+	@apply !font-['JetBrains-Bold'];
 }
 
 @keyframes disappear {
@@ -14,8 +55,4 @@ body {
 	100% {
 		opacity: 0;
 	}
-}
-
-.tags {
-	@apply rounded-md border border-neutral-600 px-1 font-mono text-sm text-neutral-300;
 }

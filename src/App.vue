@@ -122,9 +122,9 @@ onBeforeUnmount(() => {
 				ref="osd"
 				class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
 			>
-				<div class="rounded-md bg-black/80 px-6 py-3 font-mono text-white">
+				<div class="rounded-md bg-black/80 px-6 py-3 text-white">
 					<div class="flex gap-2 items-center">
-						<p class="text-2xl font-bold mr-2">
+						<p class="text-3xl font-bold mr-2">
 							{{ channelsMap.get(currentChannel)?.name }}
 						</p>
 						<span class="tags uppercase">
@@ -146,7 +146,7 @@ onBeforeUnmount(() => {
 
 				<p
 					ref="toast"
-					class="hidden rounded-md bg-red-700 px-6 py-1 font-mono font-bold text-white"
+					class="hidden rounded-md bg-red-700 px-6 py-1 font-bold text-white"
 				></p>
 			</div>
 		</div>
