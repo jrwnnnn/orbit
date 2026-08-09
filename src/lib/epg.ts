@@ -28,6 +28,8 @@ export async function getNowNext(channel: string): Promise<NowNext> {
 		epg = await res.json();
 	} catch (e) {
 		console.error(`Error fetching EPG for channel ${channel}:`, e);
+
+		// Return null for both on error
 		return { now: null, next: null };
 	}
 
