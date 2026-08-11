@@ -1,5 +1,3 @@
-import channels from "@/data/channels.json";
-
 interface EPG {
 	epg_list: {
 		desc: string;
@@ -13,14 +11,16 @@ export interface NowNext {
 	next: EPG["epg_list"][number] | null;
 }
 
-export async function getNowNext(channel: string): Promise<NowNext> {
+export async function getNowNext(
+	channel: string,
+	epg_id: number | null,
+): Promise<NowNext> {
 	let epg: EPG;
-	const channelsMap = new Map(channels.map((c) => [c.id, c]));
-
+	
 	// Fetch the EPG data for the given channel from the API
 	try {
 		const res = await fetch(
-			`https://epg.pw/api/epg.json?lang=en&date=${new Date().toISOString().slice(0, 10).replace(/-/g, "")}&channel_id=${channelsMap.get(channel)?.epg_id}`,
+			`https://epg.pw/api/epg.json?lang=en&date=${new Date().toISOString().slice(0, 10).replace(/-/g, "")}&channel_id=${epg_id}`,
 		);
 
 		if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
