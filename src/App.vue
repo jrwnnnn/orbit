@@ -1,15 +1,29 @@
 <script setup lang="ts">
-import channels from "@/data/channels.json";
 import { getNowNext, type NowNext } from "@/lib/epg";
 import Hls from "hls.js";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
-// Create a map of channel IDs to channel objects
-const channelsMap = new Map(channels.map((c) => [c.id, c]));
+interface Channel {
+	id: string;
+	name: string;
+	alt_names: string[];
+	network: string | null;
+	owners: string[];
+	country: string;
+	categories: string[];
+	is_nsfw: boolean;
+	launched: string | null;
+	closed: string | null;
+	replaced_by: string | null;
+	website: string;
+	logo: string;
+	url: string;
+	epg_id: number;
+}
 
-// The channel to be displayed
-// Set the initial channel to the first one in the channels list
-const currentChannel = ref<string>(channels[0]?.id);
+const channels = ref<Channel[]>([]);
+const channelsMap = ref(new Map());
+const currentChannel = ref<string>();
 
 // Store the current and next program information for the current channel
 // Set the initial values to null, populated later on watch()
@@ -23,6 +37,35 @@ const hlsVideo = ref<HTMLVideoElement>();
 const smpte = ref<HTMLDivElement>();
 const osd = ref<HTMLDivElement>();
 const toast = ref<HTMLDivElement>();
+
+// Fetch the list of channels from the Orbit API once so we dont stress the endpoint on quick channel switching
+async function fetchChannels() {
+	try {
+		const res = await fetch("https://orbit-api.main-973.workers.dev/");
+		if (!res.ok)
+			throw new Error(
+				`Failed to fetch Orbit API: ${res.status} ${res.statusText}`,
+			);
+
+		console.log("Fetching Orbit API...");
+		return await res.json();
+	} catch (e) {
+		console.error("Error fetching Orbit API:", e);
+		return [];
+	}
+}
+
+async function loadChannels() {
+	// Fetch the channels from the Orbit API and store them in the channels ref
+	channels.value = await fetchChannels();
+
+	// Create a map of channel IDs to channel objects
+	channelsMap.value = new Map(channels.value.map((c) => [c.id, c]));
+
+	// The channel to be displayed
+	// Set the initial channel to the first one in the channels list
+	currentChannel.value = channels.value[0]?.id;
+}
 
 // Cleanup function to destroy the Hls instance and reset it
 function cleanup() {
@@ -42,7 +85,7 @@ watch(
 		await nextTick();
 
 		// Fetch the current and next program information for the selected channel
-		getNowNext(id).then((result) => {
+		getNowNext(id, channelsMap.value.get(id)?.epg_id).then((result) => {
 			epg.value = result;
 		});
 
@@ -54,7 +97,7 @@ watch(
 		void osd.value?.offsetWidth;
 		osd.value?.classList.add("animate-[disappear_7s_step-end_forwards]");
 
-		const src = channelsMap.get(id)?.url;
+		const src = channelsMap.value.get(id)?.url;
 		if (!src || !hlsVideo.value) return;
 
 		if (Hls.isSupported()) {
@@ -94,7 +137,7 @@ watch(
 
 // Remote control navigation
 function handleKeydown(e: KeyboardEvent) {
-	const channelIds = channels.map((c) => c.id);
+	const channelIds = channels.value.map((c) => c.id);
 	const idx = channelIds.indexOf(currentChannel.value as string);
 	switch (e.key) {
 		case "ArrowUp":
@@ -108,12 +151,13 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+	loadChannels();
 	document.addEventListener("keydown", handleKeydown);
 });
 
 onBeforeUnmount(() => {
 	cleanup();
-	document.removeEventListener("keydown", () => {});
+	document.removeEventListener("keydown", handleKeydown);
 });
 </script>
 
