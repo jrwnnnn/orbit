@@ -21,7 +21,7 @@ Your LG webOS TV must have Developer Mode enabled and connected to your local ne
 
 ### Option 1: webOS Dev Manager (Recommended)
 
-1. Download and install the [webOS Dev Manager](https://github.com/webosbrew/webos-dev-manager).
+1. Download and install the [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop).
 2. Connect the webOS Dev Manager to your TV using your Developer Mode credentials.
 3. Download latest version of Orbit from the [Releases](https://github.com/jrwnnnn/orbit/releases/latest) page.
 4. Open the webOS Dev Manager, click Install, and select the `.ipk` file.
