@@ -47,7 +47,6 @@ async function fetchChannels() {
 				`Failed to fetch Orbit API: ${res.status} ${res.statusText}`,
 			);
 
-		console.log("Fetching Orbit API...");
 		return await res.json();
 	} catch (e) {
 		console.error("Error fetching Orbit API:", e);
@@ -173,6 +172,7 @@ onBeforeUnmount(() => {
 			<video ref="hlsVideo" class="h-screen" autoplay playsinline></video>
 
 			<div
+				v-if="channels"
 				ref="osd"
 				class="pointer-events-none fixed inset-0 z-10 flex animate-[disappear_7s_step-end_forwards] flex-col justify-end gap-2 p-10"
 			>
