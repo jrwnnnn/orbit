@@ -93,21 +93,23 @@ watch(
 );
 
 // Remote control navigation
-const channelIds = channels.map((c) => c.id);
-onMounted(() =>
-	document.addEventListener("keydown", (e: KeyboardEvent) => {
-		const idx = channelIds.indexOf(currentChannel.value as string);
-		switch (e.key) {
-			case "ArrowUp":
-				if (idx > 0) currentChannel.value = channelIds[idx - 1];
-				break;
-			case "ArrowDown":
-				if (idx < channelIds.length - 1)
-					currentChannel.value = channelIds[idx + 1];
-				break;
-		}
-	}),
-);
+function handleKeydown(e: KeyboardEvent) {
+	const channelIds = channels.map((c) => c.id);
+	const idx = channelIds.indexOf(currentChannel.value as string);
+	switch (e.key) {
+		case "ArrowUp":
+			if (idx > 0) currentChannel.value = channelIds[idx - 1];
+			break;
+		case "ArrowDown":
+			if (idx < channelIds.length - 1)
+				currentChannel.value = channelIds[idx + 1];
+			break;
+	}
+}
+
+onMounted(() => {
+	document.addEventListener("keydown", handleKeydown);
+});
 
 onBeforeUnmount(() => {
 	cleanup();
@@ -124,12 +126,7 @@ onBeforeUnmount(() => {
 				class="hidden h-screen w-full object-cover"
 			/>
 
-			<video
-				ref="hlsVideo"
-				class="h-screen"
-				autoplay
-				playsinline
-			></video>
+			<video ref="hlsVideo" class="h-screen" autoplay playsinline></video>
 
 			<div
 				ref="osd"
