@@ -89,6 +89,7 @@ watch(
 		});
 
 		smpte.value?.classList.add("hidden");
+		hlsFatalError.value = null;
 		hlsVideo.value!.style.display = "";
 
 		osd.value?.classList.remove("animate-[disappear_7s_step-end_forwards]");
