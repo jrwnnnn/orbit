@@ -36,7 +36,7 @@ let hls: Hls | null = null;
 const hlsVideo = ref<HTMLVideoElement>();
 const smpte = ref<HTMLDivElement>();
 const osd = ref<HTMLDivElement>();
-const toast = ref<HTMLDivElement>();
+const hlsFatalError = ref<string | null>(null);
 
 // Fetch the list of channels from the Orbit API once so we dont stress the endpoint on quick channel switching
 async function fetchChannels() {
@@ -89,7 +89,6 @@ watch(
 		});
 
 		smpte.value?.classList.add("hidden");
-		toast.value?.classList.add("hidden");
 		hlsVideo.value!.style.display = "";
 
 		osd.value?.classList.remove("animate-[disappear_7s_step-end_forwards]");
@@ -120,8 +119,7 @@ watch(
 					osd.value!.classList.remove(
 						"animate-[disappear_7s_step-end_forwards]",
 					);
-					toast.value!.classList.remove("hidden");
-					toast.value!.textContent = `Failed to load the stream: ${error.error?.message}`;
+					hlsFatalError.value = error.error?.message;
 				} else {
 					console.warn("HLS error:", error);
 				}
@@ -199,9 +197,11 @@ onBeforeUnmount(() => {
 				</div>
 
 				<p
-					ref="toast"
-					class="hidden rounded-md bg-red-700 px-6 py-1 font-bold text-white"
-				></p>
+					v-if="hlsFatalError"
+					class="rounded-md bg-red-700 px-6 py-1 font-bold text-white"
+				>
+					{{ hlsFatalError }}
+				</p>
 			</div>
 		</div>
 	</main>
