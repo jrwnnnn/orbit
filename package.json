@@ -19,7 +19,7 @@
 		"@webosose/ares-cli": "^2.4.0",
 		"autoprefixer": "^10.5.4",
 		"postcss": "^8.5.25",
-		"tailwindcss": "^3.4.19",
+		"tailwindcss": "^4.3.3",
 		"typescript": "~6.0.2",
 		"vite": "^8.2.0",
 		"vue-tsc": "^3.3.8"
