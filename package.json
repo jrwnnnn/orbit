@@ -17,7 +17,7 @@
 		"@vitejs/plugin-vue": "^6.0.8",
 		"@vue/tsconfig": "^0.9.1",
 		"@webosose/ares-cli": "^2.4.0",
-		"autoprefixer": "^10.5.4",
+		"autoprefixer": "^10.6.1",
 		"postcss": "^8.5.25",
 		"tailwindcss": "^3.4.19",
 		"typescript": "~6.0.2",
